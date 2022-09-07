@@ -10,6 +10,9 @@ const securityCors = require("./middelware/securityCORS/securityCorsMiddl");
 //import du fichier de connexion à la base de donnée 
 const connexionDb = require("./services/mongoDB/connexionDataBase");
 
+//import du module path
+const path = require("path");
+
 //import du router "product"
 const productRouter = require("./routes/productRoutes");
 

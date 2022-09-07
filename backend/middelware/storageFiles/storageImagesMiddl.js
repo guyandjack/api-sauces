@@ -19,13 +19,11 @@ const storageImg = multer.diskStorage({
    
     filename : (req, file, callback ) => {
 
-        const name =  file.originalname;
+        const originalFullName =  file.originalname.split(".");
+        const name = originalFullName[0];
         const extension = typeMime[file.mimetype];
         const nameAndExt = name + Date.now() + "." + extension;
-        console.log(nameAndExt);
-
-        //req.name = nameAndExt;
-                
+                        
         callback(null, nameAndExt);
 
         

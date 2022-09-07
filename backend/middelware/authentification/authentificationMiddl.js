@@ -8,6 +8,7 @@ exports.authCtrl = (req, res, next) => {
 
     const tokenFull = req.headers.authorization;
 
+    
     if(tokenFull != null){
 
         try{
@@ -28,6 +29,6 @@ exports.authCtrl = (req, res, next) => {
         }
     }
     else{
-        res.status(404).json({ message : " Il faut être authentifié pour acceder à ce service "})
+        res.status(403).json({ message : " Acces denied! "})
     }
 }
