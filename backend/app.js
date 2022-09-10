@@ -19,6 +19,9 @@ const productRouter = require("./routes/productRoutes");
 //import du router "User"
 const userRouter = require("./routes/userRoutes");
 
+// import du router "vote"
+const voteRouter = require("./routes/votesRoutes");
+
 
 /***************  code principal ************************/
 
@@ -43,6 +46,9 @@ appli.use("/api/sauces",  productRouter);
 
 // route et logique des requettes conernant les images
 appli.use("/images", express.static(path.join(__dirname, "images")));
+
+//route et logique des votes like et dislike
+appli.use("/api/sauces", voteRouter);
 
 
 

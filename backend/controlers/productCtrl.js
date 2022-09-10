@@ -21,9 +21,11 @@ exports.createNewProduct = (req, res, next) => {
           imageUrl: `${req.protocol}://${req.get("host")}/images/${
             req.file.filename
           }`,
+          likes : 0,
+          dislikes : 0
         });
 
-        console.log(req.file)
+        
 
         newProduct.save()
           .then( () => { res.status(201).json({ message : "produit enregistré"})})
@@ -104,7 +106,7 @@ exports.deleteOneProduct = (req, res, next) => {
         const pathFile = urlProduct[1];
         const fullPathFile = "." + pathFile;
 
-        console.log(fullPathFile);
+        
 
         fs.unlink(fullPathFile, (error) => {
           if (error) {
@@ -131,3 +133,7 @@ exports.deleteOneProduct = (req, res, next) => {
 
   
 };
+
+
+
+
