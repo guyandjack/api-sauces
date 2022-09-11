@@ -25,10 +25,10 @@ exports.authCtrl = (req, res, next) => {
         }
         
         catch(error){
-            res.status(400).json({message :  error})
+            res.status(400).json({message : "un bug special "  + error})
         }
     }
     else{
-        res.status(403).json({ message : " Acces denied! "})
+        res.status(403).json({ message : " Acces denied! pas de token dans la requette "})
     }
 }

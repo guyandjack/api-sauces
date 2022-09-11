@@ -43,49 +43,43 @@ exports.updateOneProduct = ( req, res, next) => {
 
   // teste du type de la requette
 
-  // cas si  l' objet sauce est sous forme d' uns chaine de caractere
+  // cas ou le format de la requette est un "string" car elle contient une propriete "file"
     if(typeof req.body.sauce === "string"){
 
       const productModified = JSON.parse(req.body.sauce);
 
       // si l' iduser de la sauce est le même que l' id user issu du token on autorise la modification
 
-      if( productModified.userId == req.authentification.userId){
+      if( productModified.userId == req.authentification.userId ){
         
         
         const newImageUrl = `${req.protocol}://${req.get("host")}/images/${req.file.filename}`;
 
-        delete productModified.userId;
-
-        productModel.findByIdAndUpdate(
+        
+        productModel.updateOne(
 
           { _id : sauceId },
           { 
             ...productModified,
-            userId : req.authentification.userId,
             imageUrl: newImageUrl
           }
         )
 
-          .then( (productUpdate) => { 
+          .then( () => {  res.status(201).json({message : " sauce mise à jour "})})
 
-            productUpdate.save()
-
-              .then( () => { res.status(201).json({message : " sauce mise à jour "})})
-              .catch( (e) => { res.status(400).json({ message : " sauce non actualisée " + e })})
-          })
-          .catch( (e) => { res.status(500).json({ message : " un autre bug " + e })});
+              
+          .catch( (e) => { res.status(400).json({ message : " sauce non actualisée " + e })});
       }
 
       // message d'eereur si les iduser ne correspondent pas
       else{
-        res.status(500).json({ message : " uuser mal intentionné " + e });
+        res.status(401).json({ message : " uuser non autorisé "  });
       }
 
     
     }
 
-    // cas si l' ojet sauce est un objet 
+    // cas ou le format de la requette est un simple json
     else{
 
       const productModified = req.body;
@@ -95,35 +89,23 @@ exports.updateOneProduct = ( req, res, next) => {
 
       if (productModified.userId === req.authentification.userId) {
 
-        //delete productModified.userId;
-
         productModel
-          .findByIdAndUpdate(
+          .updateOne(
             { _id: sauceId },
             {
               ...productModified,
-              userId: req.authentification.userId,
+              
             }
           )
-          .then((productUpdated) => {
-            productUpdated
-              .save()
-
-              .then(() => {
-                res.status(201).json({ message: "sauce mise à jours" });
-              })
-              .catch((e) => {
-                res.status(400).json({ message: "sauce non actualisée " + e });
-              });
-          })
-
-          .catch((e) => {
-            res.status(500).json({ message: "petit bug " + e });
-          });
+          .then( () => { res.status(201).json({ message: "sauce mise à jours" })})
+              
+          .catch((e) => { res.status(400).json({ message: "sauce non actualisée " + e })}); 
+       
       }
+
       // message d'erreur si les id ne correspondent pas
       else {
-        res.status(500).json({ message: " user mal intentionné " + e });
+        res.status(401).json({ message: " user non autorisé "  });
       }
     }
     
@@ -136,7 +118,8 @@ exports.updateOneProduct = ( req, res, next) => {
 exports.getAllproduct = (req, res, next) => {
 
   // si l' userId issu du token correspond à un utilisateur enregistré dans la DB on autorise l' affichage de toutes les sauces
-  userModel.findOne({ _id: req.authentification.userId })
+  userModel
+    .findOne({ _id : req.authentification.userId  })
 
     .then(() => {
       productModel
@@ -151,7 +134,7 @@ exports.getAllproduct = (req, res, next) => {
     })
 
     .catch((e) => {
-      res.status(403).json({ message: "Acces denied!!! " });
+      res.status(401).json({ message: "Acces denied!!! " });
     });
  
 
@@ -202,8 +185,6 @@ exports.deleteOneProduct = (req, res, next) => {
         const pathFile = urlProduct[1];
         const fullPathFile = "." + pathFile;
 
-        
-
         fs.unlink(fullPathFile, (error) => {
           if (error) {
             throw error;
@@ -221,7 +202,7 @@ exports.deleteOneProduct = (req, res, next) => {
 
       }
       else{
-        res.status(403).json({ message : " Supression du produit refusée "})
+        res.status(401).json({ message : " Supression du produit refusée "})
       }
     })
 

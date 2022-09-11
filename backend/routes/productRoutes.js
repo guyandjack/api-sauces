@@ -29,7 +29,7 @@ routerProduct.post("/", auth.authCtrl, multer, productControler.createNewProduct
 
 // route pour modifier un produit
 
-routerProduct.put("/:id", auth.authCtrl, multer, productControler.updateOneProduct);
+routerProduct.put("/:id", auth.authCtrl,  multer, productControler.updateOneProduct);
 
 
 
