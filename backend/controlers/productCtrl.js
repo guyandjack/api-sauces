@@ -7,9 +7,6 @@ const userModel = require("../models/userModel");
 //import du module fs pour la manipulation de fichiers
 const fs = require("fs");
 
-
-
-
 //permet de creer un nouveau produit
 
 exports.createNewProduct = (req, res, next) => {
@@ -65,15 +62,15 @@ exports.updateOneProduct = ( req, res, next) => {
           }
         )
 
-          .then( () => {  res.status(201).json({message : " sauce mise à jour "})})
+          .then( () => {  res.status(201).json({message : " Sauce mise à jour "})})
 
               
-          .catch( (e) => { res.status(400).json({ message : " sauce non actualisée " + e })});
+          .catch( (e) => { res.status(400).json({ message : " Sauce non actualisée " + e })});
       }
 
       // message d'eereur si les iduser ne correspondent pas
       else{
-        res.status(401).json({ message : " uuser non autorisé "  });
+        res.status(403).json({ message : " erreur 403 : Unauthorized request. "  });
       }
 
     
@@ -105,7 +102,7 @@ exports.updateOneProduct = ( req, res, next) => {
 
       // message d'erreur si les id ne correspondent pas
       else {
-        res.status(401).json({ message: " user non autorisé "  });
+        res.status(403).json({ message: "erreur 403 : Unauthorized request." });
       }
     }
     
@@ -118,8 +115,7 @@ exports.updateOneProduct = ( req, res, next) => {
 exports.getAllproduct = (req, res, next) => {
 
   // si l' userId issu du token correspond à un utilisateur enregistré dans la DB on autorise l' affichage de toutes les sauces
-  userModel
-    .findOne({ _id : req.authentification.userId  })
+  userModel.findById({ _id : req.authentification.userId  })
 
     .then(() => {
       productModel
@@ -134,7 +130,7 @@ exports.getAllproduct = (req, res, next) => {
     })
 
     .catch((e) => {
-      res.status(401).json({ message: "Acces denied!!! " });
+      res.status(401).json({ message: " Erreur 403 : Unauthorized user. " });
     });
  
 
@@ -148,22 +144,22 @@ exports.getOneProduct = (req, res, next) => {
   // si l' userId issu du token correspond à un utilisateur enregistré dans la DB on autorise l' affichage du produit selectionné
 
   userModel
-    .findOne({ _id : req.authentification.userId })
+    .findById({ _id : req.authentification.userId })
 
-    .then(() => {
-      productModel
-        .findOne({ _id : req.params.id })
+      .then(() => {
+        productModel
+          .findOne({ _id : req.params.id })
 
-        .then((productFound) => {
-          res.status(200).json(productFound);
-        })
-        .catch((error) => {
-          res.status(400).json({ message: "produit non trouvé " + error });
-        });
-    })
-    .catch((e) => {
-      res.status(403).json({ message: "Acces denied " });
-    });
+          .then((productFound) => {
+            res.status(200).json(productFound);
+          })
+          .catch((error) => {
+            res.status(400).json({ message: "produit non trouvé " + error });
+          });
+      })
+      .catch((e) => {
+        res.status(403).json({ message: "Erreur 403 : Unauthorized user. " });
+      });
  
 };
 
@@ -173,7 +169,7 @@ exports.getOneProduct = (req, res, next) => {
 
 exports.deleteOneProduct = (req, res, next) => {
 
-   productModel.findOne({ _id : req.params.id })
+   productModel.findById({ _id : req.params.id })
    
     .then( (productFind) => {
 
@@ -202,7 +198,7 @@ exports.deleteOneProduct = (req, res, next) => {
 
       }
       else{
-        res.status(401).json({ message : " Supression du produit refusée "})
+        res.status(401).json({ message: " Erreur 403 : Unauthorized user. " });
       }
     })
 
