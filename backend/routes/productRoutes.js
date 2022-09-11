@@ -25,6 +25,13 @@ const multer = require("../middelware/storageFiles/storageImagesMiddl");
 routerProduct.post("/", auth.authCtrl, multer, productControler.createNewProduct);
 
 
+/****************** route "PUT" ************************ */
+
+// route pour modifier un produit
+
+routerProduct.put("/:id", auth.authCtrl, multer, productControler.updateOneProduct);
+
+
 
 /****************** route "GET" ************************ */
 

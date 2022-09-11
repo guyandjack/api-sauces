@@ -14,7 +14,7 @@ const voteControler = require("../controlers/voteCtrl");
 
 
 // route pour noter un produit
-voteRouter.post("/:id/like",  auth.authCtrl, voteControler.likeOrDislike);
+voteRouter.post("/:id/like", auth.authCtrl, voteControler.likeOrDislike);
 
 
 module.exports = voteRouter;

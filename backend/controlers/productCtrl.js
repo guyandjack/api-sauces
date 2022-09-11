@@ -1,9 +1,12 @@
 /***** gere la logique des midellware (requettes) concernant les produits *****************/
 
-//import du model Mongo "product"
-const product = require("../models/productModel");
-const user = require("../models/userModel");
+//import des models Mongo "product" et "user"
+const productModel = require("../models/productModel");
+const userModel = require("../models/userModel");
+
+//import du module fs pour la manipulation de fichiers
 const fs = require("fs");
+
 
 
 
@@ -11,27 +14,118 @@ const fs = require("fs");
 
 exports.createNewProduct = (req, res, next) => {
 
-  const productObject = JSON.parse(req.body.sauce);
+    const productObject = JSON.parse(req.body.sauce);
 
-  delete productObject.userId;
-  
-        const newProduct = new product({
-          ...productObject,
-          userId: req.authentification.userId,
-          imageUrl: `${req.protocol}://${req.get("host")}/images/${
-            req.file.filename
-          }`,
-          likes : 0,
-          dislikes : 0
-        });
+    delete productObject.userId;
+    
+          const newProduct = new productModel({
+            ...productObject,
+            userId: req.authentification.userId,
+            imageUrl: `${req.protocol}://${req.get("host")}/images/${req.file.filename}`,
+            // initialisation des likes et dislikes à 0 pour la creation du produit
+            likes : 0,
+            dislikes : 0
+          });
 
-        
-
-        newProduct.save()
-          .then( () => { res.status(201).json({ message : "produit enregistré"})})
-          .catch( (error) => { res.status(400).json({ error })});
+          newProduct.save()
+            .then( () => { res.status(201).json({ message : "produit enregistré"})})
+            .catch( (error) => { res.status(400).json({ error })});
         
 };
+
+// permet de modifier un produit
+exports.updateOneProduct = ( req, res, next) => {
+
+  // récuperation des donneés dans les parametres de la requette
+  const sauceId = req.params.id;
+
+  // teste du type de la requette
+
+  // cas si  l' objet sauce est sous forme d' uns chaine de caractere
+    if(typeof req.body.sauce === "string"){
+
+      const productModified = JSON.parse(req.body.sauce);
+
+      // si l' iduser de la sauce est le même que l' id user issu du token on autorise la modification
+
+      if( productModified.userId == req.authentification.userId){
+        
+        
+        const newImageUrl = `${req.protocol}://${req.get("host")}/images/${req.file.filename}`;
+
+        delete productModified.userId;
+
+        productModel.findByIdAndUpdate(
+
+          { _id : sauceId },
+          { 
+            ...productModified,
+            userId : req.authentification.userId,
+            imageUrl: newImageUrl
+          }
+        )
+
+          .then( (productUpdate) => { 
+
+            productUpdate.save()
+
+              .then( () => { res.status(201).json({message : " sauce mise à jour "})})
+              .catch( (e) => { res.status(400).json({ message : " sauce non actualisée " + e })})
+          })
+          .catch( (e) => { res.status(500).json({ message : " un autre bug " + e })});
+      }
+
+      // message d'eereur si les iduser ne correspondent pas
+      else{
+        res.status(500).json({ message : " uuser mal intentionné " + e });
+      }
+
+    
+    }
+
+    // cas si l' ojet sauce est un objet 
+    else{
+
+      const productModified = req.body;
+      console.log(productModified);
+
+      // si l' iduser de la sauce est le même que l' id user issu du token on autorise la modification
+
+      if (productModified.userId === req.authentification.userId) {
+
+        //delete productModified.userId;
+
+        productModel
+          .findByIdAndUpdate(
+            { _id: sauceId },
+            {
+              ...productModified,
+              userId: req.authentification.userId,
+            }
+          )
+          .then((productUpdated) => {
+            productUpdated
+              .save()
+
+              .then(() => {
+                res.status(201).json({ message: "sauce mise à jours" });
+              })
+              .catch((e) => {
+                res.status(400).json({ message: "sauce non actualisée " + e });
+              });
+          })
+
+          .catch((e) => {
+            res.status(500).json({ message: "petit bug " + e });
+          });
+      }
+      // message d'erreur si les id ne correspondent pas
+      else {
+        res.status(500).json({ message: " user mal intentionné " + e });
+      }
+    }
+    
+}; 
 
 
 
@@ -40,11 +134,11 @@ exports.createNewProduct = (req, res, next) => {
 exports.getAllproduct = (req, res, next) => {
 
   // si l' userId issu du token correspond à un utilisateur enregistré dans la DB on autorise l' affichage de toutes les sauces
-  user.findOne({ _id : req.authentification.userId })
+  userModel.findOne({ _id: req.authentification.userId })
 
-    .then( () => {
-
-      product.find()
+    .then(() => {
+      productModel
+        .find()
 
         .then((allProducts) => {
           res.status(200).json(allProducts);
@@ -52,11 +146,11 @@ exports.getAllproduct = (req, res, next) => {
         .catch((e) => {
           res.status(400).json({ message: "Aucun produit trouvé " + e });
         });
+    })
 
-    } )
-
-    .catch((e) => { res.status(403).json({ message: "Acces denied " });
-  });
+    .catch((e) => {
+      res.status(403).json({ message: "Acces denied!!! " });
+    });
  
 
 };
@@ -68,11 +162,11 @@ exports.getOneProduct = (req, res, next) => {
 
   // si l' userId issu du token correspond à un utilisateur enregistré dans la DB on autorise l' affichage du produit selectionné
 
-  user
+  userModel
     .findOne({ _id : req.authentification.userId })
 
     .then(() => {
-      product
+      productModel
         .findOne({ _id : req.params.id })
 
         .then((productFound) => {
@@ -94,7 +188,7 @@ exports.getOneProduct = (req, res, next) => {
 
 exports.deleteOneProduct = (req, res, next) => {
 
-   product.findOne({ _id : req.params.id })
+   productModel.findOne({ _id : req.params.id })
    
     .then( (productFind) => {
 
@@ -114,12 +208,12 @@ exports.deleteOneProduct = (req, res, next) => {
           }
         });
 
-        product.deleteOne({ _id : req.params.id })
+        productModel.deleteOne({ _id : req.params.id })
 
           .then(() => {
             res.status(200).json({ message: "produit suprimé!" });
           })
-          .catch((error) => res.status(400).json({ error }));
+          .catch((error) => res.status(500).json({ error }));
 
           
 
@@ -129,7 +223,7 @@ exports.deleteOneProduct = (req, res, next) => {
       }
     })
 
-    .catch( (error) => { res.status(400).json({ error })});
+    .catch( (error) => { res.status(500).json({ error })});
 
   
 };
