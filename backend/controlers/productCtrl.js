@@ -19,11 +19,7 @@ exports.createNewProduct = (req, res, next) => {
             ...productObject,
             userId: req.authentification.userId,
             imageUrl: `${req.protocol}://${req.get("host")}/images/${req.file.filename}`,
-            // initialisation des likes et dislikes à 0 pour la creation du produit
-            likes : 0,
-            dislikes : 0,
-            usersLiked : [],
-            usersDisliked : []
+            
           });
 
           newProduct.save()
