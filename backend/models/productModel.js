@@ -15,8 +15,8 @@ const productSchema = mongoose.Schema({
     mainPepper : { type : String, required : true},
     imageUrl : { type : String, required : true},
     heat : { type : Number, required : true},
-    likes : { type : Number, required : false},
-    dislikes : { type : Number, required : false},
+    likes : { type : Number, default : 0, required : false},
+    dislikes : { type : Number, default : 0, required : false},
     usersLiked : { type : Array, required : false},
     usersDisliked : { type : Array, required : false}
 });
