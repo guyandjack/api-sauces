@@ -5,7 +5,7 @@ const express = require("express");
 const voteRouter = express.Router();
 
 
-// importation des fichier contenant le middeware d' authentification
+// importation des fichier contenant le middelware d' authentification
 const auth = require("../middelware/authentification/authentificationMiddl");
 
 //importation du fichier contenant les controleurs

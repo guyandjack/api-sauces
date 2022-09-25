@@ -64,7 +64,7 @@ exports.updateOneProduct = ( req, res, next) => {
           .catch( (e) => { res.status(400).json({ message : " Sauce non actualisée " + e })});
       }
 
-      // message d'eereur si les iduser ne correspondent pas
+      // message d'erreur si les iduser ne correspondent pas
       else{
         res.status(403).json({ message : " erreur 403 : Unauthorized request. "  });
       }

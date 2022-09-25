@@ -15,10 +15,10 @@ exports.likeOrDislike = (req, res, next) => {
 
   // si le userid de la requette est different de l'userid issu du token on n' autorise pas l' utilisateur à voter...on renvoi la reponse avec un message d' erreur.
   if (userId != req.authentification.userId) {
-    res.status(400).json({ message: "Erreur 403 : Unauthorized user." });
+    res.status(403).json({ message: "Erreur 403 : Unauthorized user." });
   }
 
-  // verifie si cet user a déja voté (like ou dislike) pour cette sauce
+  // recherche du produit dana la base de donnée
   productModel.findById({ _id: sauceId })
 
     .then((productFind) => {
@@ -36,7 +36,7 @@ exports.likeOrDislike = (req, res, next) => {
         voteAuhtorisation = "both";
       }
 
-      // si l'utilisateur a "LIKE" ou "DISLIKE"
+      // si l'utilisateur a deja "LIKE" ou "DISLIKE"
       if (alreadyDisliked != -1 || alreadyLiked != -1) {
         voteAuhtorisation = "delete";
       }
@@ -76,7 +76,7 @@ exports.likeOrDislike = (req, res, next) => {
               res.status(201).json({ message: " Vote 'DISLIKE' enregistré" });
             })
             .catch((e) => {
-              res.status(500).json({ message: "voici un bug " + e });
+              res.status(500).json({ message: "Impossible de valider votre vote 'DISLIKE' " + e });
             });
 
           break;
@@ -104,7 +104,7 @@ exports.likeOrDislike = (req, res, next) => {
                 res.status(201).json({ message: " Vote 'LIKE' annulé " });
               })
               .catch((e) => {
-                res.status(500).json({ message: "un autre bug ici.. " + e });
+                res.status(500).json({ message: "Impossible de valider votre annulation " + e });
               });
               
           }
@@ -119,10 +119,10 @@ exports.likeOrDislike = (req, res, next) => {
                 }
               )
               .then(() => {
-                res.status(201).json({ message: " Vote 'DISLIKE' annulé" });
+                res.status(200).json({ message: " Vote 'DISLIKE' annulé" });
               })
               .catch((e) => {
-                res.status(500).json({ message: "un autre bug ici.. " + e });
+                res.status(500).json({ message: "Impossible de valider votre annulation" + e });
               });
             }
         break;
@@ -147,11 +147,11 @@ exports.likeOrDislike = (req, res, next) => {
             )
 
             .then(() => {
-              res.status(201).json({ message: "vote 'LIKE' enregistré" });
+              res.status(200).json({ message: "vote 'LIKE' enregistré" });
             })
 
             .catch((e) => {
-              res.status(500).json({ message: "ca bug par là " + e });
+              res.status(500).json({ message: "Impossible de valider votre vote 'LIKE' " + e });
             });
           
         break;
@@ -160,7 +160,7 @@ exports.likeOrDislike = (req, res, next) => {
     })
 
     .catch((e) => {
-      res.status(500).json({ message: "un bug bizare " + e });
+      res.status(500).json({ message:  e });
     });
 };
 
