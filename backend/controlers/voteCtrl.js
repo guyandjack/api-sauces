@@ -13,12 +13,12 @@ exports.likeOrDislike = (req, res, next) => {
   let voteAuhtorisation = "";
   let voteDone = "";
 
-  // si le userid de la requette est different de l'userid issu du token on n' autorise pas l' utilisateur à voter...on renvoi la reponse avec un message d' erreur.
-  if (userId != req.authentification.userId) {
-    res.status(403).json({ message: "Erreur 403 : Unauthorized user." });
+  // (SECURITE AUTHENTIFICATION) si le userid de la requette est different de l'userid issu du token on n' autorise pas l' utilisateur à voter...on renvoi la reponse avec un message d' erreur.
+  if ( typeof req.authentification == "undefined" || userId != req.authentification.userId) {
+    res.status(403).json({ message: "Erreur 403 : Acces denied.!." });
   }
 
-  // recherche du produit dana la base de donnée
+  // recherche du produit dans la base de donnée
   productModel.findById({ _id: sauceId })
 
     .then((productFind) => {
@@ -27,16 +27,15 @@ exports.likeOrDislike = (req, res, next) => {
       const arrayOfLikers = productFind.usersLiked;
       const arrayOfDislikers = productFind.usersDisliked;
 
-      
       const alreadyLiked = arrayOfLikers.indexOf(userId);
       const alreadyDisliked = arrayOfDislikers.indexOf(userId);
-      
-      // si l'utilisateur a ni "LIKE" ni "DISLIKE"  
+
+      // si l'utilisateur n' a pas voté
       if (alreadyDisliked == -1 && alreadyLiked == -1) {
         voteAuhtorisation = "both";
       }
 
-      // si l'utilisateur a deja "LIKE" ou "DISLIKE"
+      // si l'utilisateur a deja voté
       if (alreadyDisliked != -1 || alreadyLiked != -1) {
         voteAuhtorisation = "delete";
       }
@@ -57,11 +56,9 @@ exports.likeOrDislike = (req, res, next) => {
         case -1:
           // verifie si l' utilisateur est autorisè à voter "dislike"
           if (voteAuhtorisation != "both") {
-            res
-              .status(403)
-              .json({
-                message: " Vous avez deja voté un 'DISLIKE' pour cette sauce !"
-              });
+            res.status(403).json({
+              message: " Vous avez deja voté un 'DISLIKE' pour cette sauce !",
+            });
           }
 
           productModel
@@ -76,7 +73,11 @@ exports.likeOrDislike = (req, res, next) => {
               res.status(201).json({ message: " Vote 'DISLIKE' enregistré" });
             })
             .catch((e) => {
-              res.status(500).json({ message: "Impossible de valider votre vote 'DISLIKE' " + e });
+              res
+                .status(500)
+                .json({
+                  message: "Impossible de valider votre vote 'DISLIKE' " + e,
+                });
             });
 
           break;
@@ -104,9 +105,12 @@ exports.likeOrDislike = (req, res, next) => {
                 res.status(201).json({ message: " Vote 'LIKE' annulé " });
               })
               .catch((e) => {
-                res.status(500).json({ message: "Impossible de valider votre annulation " + e });
+                res
+                  .status(500)
+                  .json({
+                    message: "Impossible de valider votre annulation " + e,
+                  });
               });
-              
           }
 
           if (voteDone === "dislike") {
@@ -122,20 +126,26 @@ exports.likeOrDislike = (req, res, next) => {
                 res.status(200).json({ message: " Vote 'DISLIKE' annulé" });
               })
               .catch((e) => {
-                res.status(500).json({ message: "Impossible de valider votre annulation" + e });
+                res
+                  .status(500)
+                  .json({
+                    message: "Impossible de valider votre annulation" + e,
+                  });
               });
-            }
-        break;
+          }
+          break;
 
         case 1:
           // case : 1 permet à l'utilisateur de voter "LIKE"
 
           // verifie si l' utilisateur est autorisé à voter "LIKE"
           if (voteAuhtorisation != "both") {
-            res.status(403).json({ message : "Vous avez deja voté un 'LIKE' pour cette sauce !"})
-            
+            res
+              .status(403)
+              .json({
+                message: "Vous avez deja voté un 'LIKE' pour cette sauce !",
+              });
           }
-
 
           productModel
             .findByIdAndUpdate(
@@ -151,16 +161,19 @@ exports.likeOrDislike = (req, res, next) => {
             })
 
             .catch((e) => {
-              res.status(500).json({ message: "Impossible de valider votre vote 'LIKE' " + e });
+              res
+                .status(500)
+                .json({
+                  message: "Impossible de valider votre vote 'LIKE' " + e,
+                });
             });
-          
-        break;
 
+          break;
       }
     })
 
     .catch((e) => {
-      res.status(500).json({ message:  e });
+      res.status(500).json({ message: e });
     });
 };
 

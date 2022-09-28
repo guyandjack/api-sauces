@@ -29,7 +29,8 @@ routerProduct.post("/", auth.authCtrl, multer, productControler.createNewProduct
 
 // route pour modifier un produit
 
-routerProduct.put("/:id", auth.authCtrl,  multer, productControler.updateOneProduct);
+routerProduct.put("/:id", auth.authCtrl, multer, productControler.updateOneProduct);
+
 
 
 
@@ -46,7 +47,7 @@ routerProduct.get("/:id", auth.authCtrl, productControler.getOneProduct );
 /************ route delete ********************** */
 
 //route pour supprimer un seul produit
-routerProduct.delete("/:id", auth.authCtrl,  productControler.deleteOneProduct);
+routerProduct.delete("/:id", auth.authCtrl, productControler.deleteOneProduct);
 
 
 module.exports = routerProduct;

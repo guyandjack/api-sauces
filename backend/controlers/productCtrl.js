@@ -6,18 +6,30 @@ const userModel = require("../models/userModel");
 
 //import du module fs pour la manipulation de fichiers
 const fs = require("fs");
+const { throwError } = require("rxjs");
 
-//permet de creer un nouveau produit
+
+
+/****************************************  permet de créer un nouveau produit  ********************/
 
 exports.createNewProduct = (req, res, next) => {
 
-    const productObject = JSON.parse(req.body.sauce);
+  const productObject = JSON.parse(req.body.sauce);
+
+  // (SECURITE AUTHENTIFICATION) si la propriete "authentification" issu du midellware d' authentification n' existe pas on interdit l' affichage de toutes les sauces.
+
+
+     if ( typeof req.authentification == "undefined" ) {
+        
+        res.status(403).json({ message: "erreur 403 : Acces denied because..." });
+      }
+
 
     delete productObject.userId;
     
           const newProduct = new productModel({
             ...productObject,
-            userId: req.authentification.userId,
+            userId: req.authentification.userId, // (SECURITE AUTHENTIFICATION) on utilise l' userId issu du token pour attribuer le produit à l' utilisateur
             imageUrl: `${req.protocol}://${req.get("host")}/images/${req.file.filename}`,
             
           });
@@ -28,7 +40,10 @@ exports.createNewProduct = (req, res, next) => {
         
 };
 
-// permet de modifier un produit
+
+
+/****************************************  permet de modifier un produit*********************/ 
+
 exports.updateOneProduct = ( req, res, next) => {
 
   // récuperation des donneés dans les parametres de la requette
@@ -36,171 +51,214 @@ exports.updateOneProduct = ( req, res, next) => {
 
   // teste du type de la requette
 
-  // cas ou le format de la requette est un "string" car elle contient une propriete "file"
+  // cas où le format de la requette est un "string" car elle contient fichier
     if(typeof req.body.sauce === "string"){
 
+      
+      //const objectRequest = JSON.parse(req.authentification)
       const productModified = JSON.parse(req.body.sauce);
+      
+      // (SECURITE AUTHENTIFICATION) si l' iduser de la sauce est different que l' id user issu du token on interdit la modification
 
-      // si l' iduser de la sauce est le même que l' id user issu du token on autorise la modification
+     if ( typeof req.authentification == "undefined" ||  productModified.userId != req.authentification.userId) {
 
-      if( productModified.userId == req.authentification.userId ){
+        res.status(403).json({ message: "erreur 403 : Acces denied because......" });
+     }
+
+      
+      // creation du chemin ou sera enregistrer la nouvelle image
+      const newImageUrl = `${req.protocol}://${req.get("host")}/images/${req.file.filename}`;
+
         
-        
-        const newImageUrl = `${req.protocol}://${req.get("host")}/images/${req.file.filename}`;
+      productModel.findById({ _id : sauceId })
 
-        
-        productModel.updateOne(
+          .then( (productToModify) => {
 
-          { _id : sauceId },
-          { 
-            ...productModified,
-            imageUrl: newImageUrl
-          }
-        )
+            const urlProduct = productToModify.imageUrl.split("/images/");
+            const pathFile = urlProduct[1];
+            const fullPathFile = "images/" + pathFile;
 
-          .then( () => {  res.status(201).json({message : " Sauce mise à jour "})})
+            // suppression de l' image correspondante au produit
+            fs.unlink(fullPathFile, (error) => {
+              if (error) {
+                throw error;
+              }
+            });
+
+            productToModify
+              .update({
+                ...productModified,
+                imageUrl: newImageUrl,
+              })
+
+              .then( () => {
+                res.status(201).json({ message: " Sauce mise à jour " })})
+
+              .catch((e) => {
+                res.status(500).json({ message: " Erreur 500 : Sauce non actualisée " + e });
+              });
+
+
+            
+          })
 
               
-          .catch( (e) => { res.status(400).json({ message : " Sauce non actualisée " + e })});
-      }
+          .catch( (e) => { res.status(500).json({ message : " Erreur 500 : " + e })});
+      
 
-      // message d'erreur si les iduser ne correspondent pas
-      else{
-        res.status(403).json({ message : " erreur 403 : Unauthorized request. "  });
-      }
-
-    
+          
     }
 
-    // cas ou le format de la requette est un simple json
+    // cas où le format de la requette est un simple json sans fichier
     else{
 
       const productModified = req.body;
-      console.log(productModified);
+      
+      // (SECURITE AUTHENTIFICATION) si l' iduser de la sauce est different que l' id user issu du token on interdit la modification
 
-      // si l' iduser de la sauce est le même que l' id user issu du token on autorise la modification
+      if ( typeof req.authentification == "undefined"  || productModified.userId != req.authentification.userId) {
+        
+        res.status(403).json({ message: "erreur 403 : Acces denied because.????" });
+      }
 
-      if (productModified.userId === req.authentification.userId) {
-
-        productModel
-          .updateOne(
-            { _id: sauceId },
-            {
-              ...productModified,
-              
-            }
-          )
-          .then( () => { res.status(201).json({ message: "sauce mise à jours" })})
-              
-          .catch((e) => { res.status(400).json({ message: "sauce non actualisée " + e })}); 
+      productModel
+        .updateOne(
+          { _id: sauceId },
+          {
+            ...productModified,
+            
+          }
+        )
+        .then( () => { res.status(201).json({ message: "Sauce mise à jours" })})
+            
+        .catch((e) => { res.status(500).json({ message: " Erreur 500 : Sauce non actualisée " + e })}); 
        
-      }
-
-      // message d'erreur si les id ne correspondent pas
-      else {
-        res.status(403).json({ message: "erreur 403 : Unauthorized request." });
-      }
+           
     }
     
 }; 
 
 
 
-// permet de recuperer tous les produits
+
+
+
+/**************************** Permet de recuperer tous les produits ****************************/
 
 exports.getAllproduct = (req, res, next) => {
 
-  // si l' userId issu du token correspond à un utilisateur enregistré dans la DB on autorise l' affichage de toutes les sauces
-  userModel.findById({ _id : req.authentification.userId  })
+  
+  // (SECURITE AUTHENTIFICATION) si la propriete "authentification" issu du midellware d' authentification n' existe pas on interdit l' affichage de toutes les sauces.
+
+   
+  if (typeof req.authentification == "undefined" ) {
+    res.status(403).json({ message: "erreur 403 : Acces denied because!." });
+  }
+
+  // (SECURITE AUTHENTIFICATION) si l' id de l' utilisateur correspond à un userId enregistré dans la BDD on autorise l' affichage de toute les sauces
+
+  userModel.findById( { _id : req.authentification.userId })
 
     .then(() => {
-      productModel
-        .find()
+
+      productModel.find()
 
         .then((allProducts) => {
           res.status(200).json(allProducts);
         })
         .catch((e) => {
-          res.status(400).json({ message: "Aucun produit trouvé " + e });
+          res.status(500).json({ message: "Erreur 500 " + e });
+        });
+    })
+
+    .catch((e) => {res.status(500).json({ message:  e });})
+
+ 
+};
+
+
+
+
+
+
+/********************** permet de recuperer un  seul produit **********************************/
+
+exports.getOneProduct = (req, res, next) => {
+  // (SECURITE AUTHENTIFICATION) si la propriete "authentification" issu du midellware d' authentification n' existe pas on interdit l' affichage de la sauce.
+
+  if (typeof req.authentification == "undefined") {
+    res.status(403).json({ message: "erreur 403 : Acces denied because!." });
+  }
+
+  // (SECURITE AUTHENTIFICATION) si l' id de l' utilisateur correspond à un userId enregistré dans la BDD on autorise l' affichage de la sauce
+
+  userModel.findById({ _id: req.authentification.userId })
+
+    .then(() => {
+      productModel.findById({ _id: req.params.id })
+
+        .then((productFound) => {
+          res.status(200).json(productFound);
+        })
+        .catch((error) => {
+          res.status(500).json({ message: "Erreur 500 " + error });
         });
     })
 
     .catch((e) => {
-      res.status(401).json({ message: " Erreur 403 : Unauthorized user. " });
+      res.status(403).json({ message: e });
     });
- 
-
-};
-
-
-// permet de recuperer un  seul produit
-
-exports.getOneProduct = (req, res, next) => {
-
-  // si l' userId issu du token correspond à un utilisateur enregistré dans la DB on autorise l' affichage du produit selectionné
-
-  userModel
-    .findById({ _id : req.authentification.userId })
-
-      .then(() => {
-        productModel
-          .findOne({ _id : req.params.id })
-
-          .then((productFound) => {
-            res.status(200).json(productFound);
-          })
-          .catch((error) => {
-            res.status(400).json({ message: "produit non trouvé " + error });
-          });
-      })
-      .catch((e) => {
-        res.status(403).json({ message: "Erreur 403 : Unauthorized user. " });
-      });
- 
 };
 
 
 
-// permet de supprimer un seul produit
+
+
+
+/************************************ permet de supprimer un seul produit *************************/
 
 exports.deleteOneProduct = (req, res, next) => {
+  // (SECURITE AUTHENTIFICATION) si la propriete "authentification" issu du midellware d' authentification n' existe pas on interdit l' affichage de la sauce.
 
-   productModel.findById({ _id : req.params.id })
-   
-    .then( (productFind) => {
+  if (typeof req.authentification == "undefined") {
+    res.status(403).json({ message: "erreur 403 : Acces denied because!." });
+  }
 
-      // si l' userId du produit est le meme userId que celui issu du token on autorise la suppression du produit
+  productModel.findById({ _id: req.params.id })
 
-      if( productFind.userId == req.authentification.userId){
+    .then((productFind) => {
 
-        const urlProduct = productFind.imageUrl.split("3000");
-        const pathFile = urlProduct[1];
-        const fullPathFile = "." + pathFile;
+      // (SECURITE AUTHENTIFICATION) si l' userId du produit est different de l'userId issu du token on interdit la suppression du produit
 
-        fs.unlink(fullPathFile, (error) => {
-          if (error) {
-            throw error;
-          }
-        });
-
-        productModel.deleteOne({ _id : req.params.id })
-
-          .then(() => {
-            res.status(200).json({ message: "produit suprimé!" });
-          })
-          .catch((error) => res.status(500).json({ error }));
-
-          
-
+      if (productFind.userId != req.authentification.userId) {
+        res.status(403).json({ message: " Erreur 403 : Acces denied.!! " });
       }
-      else{
-        res.status(401).json({ message: " Erreur 403 : Unauthorized user. " });
-      }
+
+      const urlProduct = productFind.imageUrl.split("/images/");
+      const pathFile = urlProduct[1];
+      const fullPathFile = "images/" + pathFile;
+
+      // suppression de l' image correspondante au produit
+      fs.unlink(fullPathFile, (error) => {
+        if (error) {
+          throw error;
+        }
+      });
+
+      // suppression du produit
+      productModel.deleteOne({ _id: req.params.id })
+
+        .then(() => {
+          res.status(200).json({ message: "Produit suprimé!" });
+        })
+        .catch((error) =>
+          res.status(500).json({ message: "erreur 500 " + error })
+        );
     })
 
-    .catch( (error) => { res.status(500).json({ error })});
-
-  
+    .catch((error) => {
+      res.status(500).json({ message: "erreur 500 " + error });
+    });
 };
 
 

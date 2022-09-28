@@ -1,5 +1,9 @@
 /************* gestion de l'authentification sur les requettes ************ */
 const jwt = require("jsonwebtoken");
+require("dotenv").config();
+
+
+
 
 
 // middelware  d'authentification 
@@ -14,7 +18,7 @@ exports.authCtrl = (req, res, next) => {
         try{
 
         const tokenOnly = tokenFull.split(" ");
-        const decodedToken = jwt.verify(tokenOnly[1], "CLEF-ENCODAGE-TOKEN");
+        const decodedToken = jwt.verify(tokenOnly[1], process.env.KEYTOKEN);
         const Userid = decodedToken.userId;
 
         req.authentification = {
@@ -29,6 +33,6 @@ exports.authCtrl = (req, res, next) => {
         }
     }
     else{
-        res.status(403).json({ message : " Acces denied! pas de token dans la requette "})
+        res.status(403).json({ message : " Acces denied! "})
     }
 }
