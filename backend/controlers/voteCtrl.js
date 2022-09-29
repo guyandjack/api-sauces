@@ -61,24 +61,29 @@ exports.likeOrDislike = (req, res, next) => {
             });
           }
 
-          productModel
-            .findByIdAndUpdate(
-              { _id: sauceId },
-              {
-                $inc: { dislikes: 1 },
-                $push: { usersDisliked: userId },
-              }
-            )
-            .then(() => {
-              res.status(201).json({ message: " Vote 'DISLIKE' enregistré" });
-            })
-            .catch((e) => {
-              res
-                .status(500)
-                .json({
+            productModel
+              .findByIdAndUpdate(
+                { _id: sauceId },
+                {
+                  $inc: { dislikes: 1 },
+                  $push: { usersDisliked: userId },
+                }
+              )
+              .then((result) => {
+
+                if(result == null){
+
+                  res.status(500).json({ message: "Impossible de valider votre vote 'DISLIKE' " })
+                }
+
+                res.status(201).json({ message: " Vote 'DISLIKE' enregistré" });
+              })
+
+              .catch((e) => {
+                res.status(500).json({
                   message: "Impossible de valider votre vote 'DISLIKE' " + e,
                 });
-            });
+              });
 
           break;
 
@@ -101,7 +106,12 @@ exports.likeOrDislike = (req, res, next) => {
                   $pull: { usersLiked: userId },
                 }
               )
-              .then(() => {
+              .then((result) => {
+
+                if(result == null){
+
+                  res.status(500).json({ message: "Impossible de valider votre annulation " })
+                }
                 res.status(201).json({ message: " Vote 'LIKE' annulé " });
               })
               .catch((e) => {
@@ -122,7 +132,11 @@ exports.likeOrDislike = (req, res, next) => {
                   $pull: { usersDisliked: userId },
                 }
               )
-              .then(() => {
+              .then((result) => {
+                if(result == null){
+
+                  res.status(500).json({ message: "Impossible de valider votre annulation " })
+                }
                 res.status(200).json({ message: " Vote 'DISLIKE' annulé" });
               })
               .catch((e) => {
@@ -156,7 +170,12 @@ exports.likeOrDislike = (req, res, next) => {
               }
             )
 
-            .then(() => {
+            .then((result) => {
+
+              if(result == null){
+
+                  res.status(500).json({ message: "Impossible de valider votre vote 'LIKE' " })
+                }
               res.status(200).json({ message: "vote 'LIKE' enregistré" });
             })
 

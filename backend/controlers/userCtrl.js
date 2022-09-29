@@ -57,7 +57,7 @@ exports.loginUser = (req, res, next) => {
 
       if(userFound === null){
 
-        res.status(401).json({ message: " Identifiant ou mot de passe invalide " + error });
+        res.status(401).json({ message: " Identifiant ou mot de passe invalide 1"  });
       };
       
 
@@ -66,7 +66,7 @@ exports.loginUser = (req, res, next) => {
           .then((result) => {
 
             if(!result){
-              res.status(401).json({ message: " Identifiant ou mot de passe invalide" });
+              res.status(401).json({ message: " Identifiant ou mot de passe invalide 2" });
             }
 
             res.status(200).json({
@@ -82,12 +82,14 @@ exports.loginUser = (req, res, next) => {
             
           })
 
+
           .catch((error) => {
             res.status(500).json({message: "Erreur 500! " + error });
           });
 
       
     })
+    
 
     .catch((error) => {
       res
@@ -95,4 +97,7 @@ exports.loginUser = (req, res, next) => {
         .json({ message: " erreur 500 :  " + error });
     });
 };
+
+
+
 

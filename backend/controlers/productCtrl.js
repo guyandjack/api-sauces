@@ -21,7 +21,7 @@ exports.createNewProduct = (req, res, next) => {
 
      if ( typeof req.authentification == "undefined" ) {
         
-        res.status(403).json({ message: "erreur 403 : Acces denied because..." });
+        res.status(403).json({ message: "erreur 403 : Acces denied A" });
       }
 
 
@@ -53,60 +53,71 @@ exports.updateOneProduct = ( req, res, next) => {
 
   // cas où le format de la requette est un "string" car elle contient fichier
     if(typeof req.body.sauce === "string"){
-
-      
       //const objectRequest = JSON.parse(req.authentification)
       const productModified = JSON.parse(req.body.sauce);
-      
+
       // (SECURITE AUTHENTIFICATION) si l' iduser de la sauce est different que l' id user issu du token on interdit la modification
 
-     if ( typeof req.authentification == "undefined" ||  productModified.userId != req.authentification.userId) {
+      if (
+        typeof req.authentification == "undefined" ||
+        productModified.userId != req.authentification.userId
+      ) {
+        res.status(403).json({ message: "erreur 403 : Acces denied A" });
+      }
 
-        res.status(403).json({ message: "erreur 403 : Acces denied because......" });
-     }
+      // (SECURITE AUTHENTIFICATION) on recherche un produit qui a  un userId qui correspond à celui issu du token
+      productModel
+        .findOne({
+          _id: sauceId,
+          userId: req.authentification.userId,
+        })
 
-      
-      // creation du chemin ou sera enregistrer la nouvelle image
-      const newImageUrl = `${req.protocol}://${req.get("host")}/images/${req.file.filename}`;
+        .then((productToModify) => {
+          if (productToModify == null) {
+            res.status(403).json({ message: "erreur 403 : Acces denied B" });
+          }
 
-        
-      productModel.findById({ _id : sauceId })
+          const urlProduct = productToModify.imageUrl.split("/images/");
+          const pathFile = urlProduct[1];
+          const fullPathFile = "images/" + pathFile;
 
-          .then( (productToModify) => {
+          // suppression de l' image correspondante au produit
+          fs.unlink(fullPathFile, (error) => {
+            if (error) {
+              throw error;
+            }
+          });
 
-            const urlProduct = productToModify.imageUrl.split("/images/");
-            const pathFile = urlProduct[1];
-            const fullPathFile = "images/" + pathFile;
+          // creation du chemin ou sera enregistrer la nouvelle image
+          const newImageUrl = `${req.protocol}://${req.get("host")}/images/${
+            req.file.filename
+          }`;
 
-            // suppression de l' image correspondante au produit
-            fs.unlink(fullPathFile, (error) => {
-              if (error) {
-                throw error;
+          productToModify
+            .update({
+              ...productModified,
+              imageUrl: newImageUrl,
+            })
+
+            .then((result) => {
+              if (result.modifiedCount == 0) {
+                res.status(404).json({ message: "Sauce non trouvée" });
               }
+
+              res.status(201).json({ message: " Sauce mise à jour " });
+            })
+
+            .catch((e) => {
+              res
+                .status(500)
+                .json({ message: " Erreur 500 : Sauce non actualisée " + e });
             });
+        })
 
-            productToModify
-              .update({
-                ...productModified,
-                imageUrl: newImageUrl,
-              })
-
-              .then( () => {
-                res.status(201).json({ message: " Sauce mise à jour " })})
-
-              .catch((e) => {
-                res.status(500).json({ message: " Erreur 500 : Sauce non actualisée " + e });
-              });
-
-
-            
-          })
-
-              
-          .catch( (e) => { res.status(500).json({ message : " Erreur 500 : " + e })});
-      
-
-          
+        .catch((e) => {
+          console.log(e);
+          res.status(500).json({ message: " Erreur 500 : " + e });
+        });
     }
 
     // cas où le format de la requette est un simple json sans fichier
@@ -118,25 +129,71 @@ exports.updateOneProduct = ( req, res, next) => {
 
       if ( typeof req.authentification == "undefined"  || productModified.userId != req.authentification.userId) {
         
-        res.status(403).json({ message: "erreur 403 : Acces denied because.????" });
+        res.status(403).json({ message: "erreur 403 : Acces denied C" });
       }
 
-      productModel
+      productModel.findOne({
+        _id : sauceId,
+        userId : req.authentification.userId,
+
+      })
+
+        .then((productToModify) => {
+
+          if (productToModify == null) {
+            res.status(403).json({ message: "erreur 403 : Acces denied D" });
+          }
+
+          productToModify.update({
+
+            ...productModified
+
+          })
+
+             .then((result) => {
+
+              if (result.modifiedCount == 0) {
+                res.status(404).json({ message: "Sauce non trouvée" });
+              }
+
+              res.status(201).json({ message: " Sauce mise à jour " });
+            })
+
+            .catch((e) => {
+              res.status(500).json({ message: " Erreur 500 : Sauce non actualisée " + e });
+            });
+        })
+
+        .catch((e)=> { res.status(404).json({ message : e })})
+
+      /*productModel
         .updateOne(
-          { _id: sauceId },
+          { _id: sauceId,
+          userId : req.authentification.userId },
           {
             ...productModified,
             
           }
         )
-        .then( () => { res.status(201).json({ message: "Sauce mise à jours" })})
+        .then( (result) => { 
+           
+
+          if(result.modifiedCount == 0){
+
+            res.status(404).json({ message: "Sauce non trouvée" })
+          }
+
+            res.status(201).json({ message: "Sauce mise à jours" })})
+        
             
-        .catch((e) => { res.status(500).json({ message: " Erreur 500 : Sauce non actualisée " + e })}); 
+        .catch((e) => { console.log(e)
+          res.status(500).json({ message: " Erreur 500 : Sauce non actualisée " + e })}); */
        
            
     }
     
 }; 
+
 
 
 
@@ -155,26 +212,20 @@ exports.getAllproduct = (req, res, next) => {
     res.status(403).json({ message: "erreur 403 : Acces denied because!." });
   }
 
-  // (SECURITE AUTHENTIFICATION) si l' id de l' utilisateur correspond à un userId enregistré dans la BDD on autorise l' affichage de toute les sauces
-
-  userModel.findById( { _id : req.authentification.userId })
-
-    .then(() => {
 
       productModel.find()
 
         .then((allProducts) => {
           res.status(200).json(allProducts);
         })
+
         .catch((e) => {
           res.status(500).json({ message: "Erreur 500 " + e });
         });
-    })
+    
 
-    .catch((e) => {res.status(500).json({ message:  e });})
-
- 
 };
+
 
 
 
@@ -187,14 +238,10 @@ exports.getOneProduct = (req, res, next) => {
   // (SECURITE AUTHENTIFICATION) si la propriete "authentification" issu du midellware d' authentification n' existe pas on interdit l' affichage de la sauce.
 
   if (typeof req.authentification == "undefined") {
-    res.status(403).json({ message: "erreur 403 : Acces denied because!." });
+    res.status(403).json({ message: "erreur 403 : Acces denied! A" });
   }
 
-  // (SECURITE AUTHENTIFICATION) si l' id de l' utilisateur correspond à un userId enregistré dans la BDD on autorise l' affichage de la sauce
-
-  userModel.findById({ _id: req.authentification.userId })
-
-    .then(() => {
+ 
       productModel.findById({ _id: req.params.id })
 
         .then((productFound) => {
@@ -203,11 +250,7 @@ exports.getOneProduct = (req, res, next) => {
         .catch((error) => {
           res.status(500).json({ message: "Erreur 500 " + error });
         });
-    })
-
-    .catch((e) => {
-      res.status(403).json({ message: e });
-    });
+    
 };
 
 

@@ -1,6 +1,10 @@
 /************* gestion de l'authentification sur les requettes ************ */
+
+// import des differents modules
 const jwt = require("jsonwebtoken");
 require("dotenv").config();
+
+const userModel = require("../../models/userModel");
 
 
 
@@ -10,29 +14,42 @@ require("dotenv").config();
 
 exports.authCtrl = (req, res, next) => {
 
-    const tokenFull = req.headers.authorization;
+  const tokenFull = req.headers.authorization;
 
-    
-    if(tokenFull != null){
+  //(SECURITE AUTHENTIFICATION) si la propriete authorisation est nulle on envoi un message d' erreur
+  if (tokenFull == null) {
+    res.status(403).json({ message: " Acces denied 1 " });
+  }
 
-        try{
+    try {
+      const tokenOnly = tokenFull.split(" ");
+      const decodedToken = jwt.verify(tokenOnly[1], process.env.KEYTOKEN);
 
-        const tokenOnly = tokenFull.split(" ");
-        const decodedToken = jwt.verify(tokenOnly[1], process.env.KEYTOKEN);
-        const Userid = decodedToken.userId;
+      const Userid = decodedToken.userId;
 
-        req.authentification = {
-            userId : Userid
-        }
+      req.authentification = {
+        userId: Userid,
+      };
 
-        next();
-        }
-        
-        catch(error){
-            res.status(400).json({message : "un bug special "  + error})
-        }
+      // (SECURITE AUTHENTIFICATION) si le userId issu du token est enregistré  dans la base de donnée, l' authentification est validée on passe au middelware suivant.
+
+      userModel.findOne({ _id: Userid })
+
+        .then((result) => {
+
+            if(result == null){
+
+                res.status(403).json({ message : "Acces denied 2"})
+            }
+            
+            next();
+            
+        })
+        .catch((e) => res.status(403).json({ message: "Acces denied! 3" }));
+    } 
+    catch (e) {
+      res.status(403).json({ message: "Acces denied! 4" });
     }
-    else{
-        res.status(403).json({ message : " Acces denied! "})
-    }
+
+      
 }
