@@ -73,6 +73,7 @@ exports.updateOneProduct = ( req, res, next) => {
         })
 
         .then((productToModify) => {
+
           if (productToModify == null) {
             res.status(403).json({ message: "erreur 403 : Acces denied B" });
           }
@@ -166,28 +167,7 @@ exports.updateOneProduct = ( req, res, next) => {
 
         .catch((e)=> { res.status(404).json({ message : e })})
 
-      /*productModel
-        .updateOne(
-          { _id: sauceId,
-          userId : req.authentification.userId },
-          {
-            ...productModified,
-            
-          }
-        )
-        .then( (result) => { 
-           
-
-          if(result.modifiedCount == 0){
-
-            res.status(404).json({ message: "Sauce non trouvée" })
-          }
-
-            res.status(201).json({ message: "Sauce mise à jours" })})
-        
-            
-        .catch((e) => { console.log(e)
-          res.status(500).json({ message: " Erreur 500 : Sauce non actualisée " + e })}); */
+      
        
            
     }

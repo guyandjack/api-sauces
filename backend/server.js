@@ -5,6 +5,11 @@
 //import du module natif "http"
 const http = require("http");
 
+//import du module natif "http"
+const https = require("https");
+
+
+
 //import de l'appli express
 const appli = require("./app");
 

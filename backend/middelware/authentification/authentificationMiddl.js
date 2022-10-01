@@ -26,6 +26,7 @@ exports.authCtrl = (req, res, next) => {
       const decodedToken = jwt.verify(tokenOnly[1], process.env.KEYTOKEN);
 
       const Userid = decodedToken.userId;
+      
 
       req.authentification = {
         userId: Userid,
@@ -41,14 +42,14 @@ exports.authCtrl = (req, res, next) => {
 
                 res.status(403).json({ message : "Acces denied 2"})
             }
-            
+
             next();
             
         })
         .catch((e) => res.status(403).json({ message: "Acces denied! 3" }));
     } 
     catch (e) {
-      res.status(403).json({ message: "Acces denied! 4" });
+      res.status(403).json({ message: "Acces denied! 4 " + e });
     }
 
       
